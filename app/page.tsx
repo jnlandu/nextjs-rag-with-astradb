@@ -8,12 +8,14 @@ import { Message } from 'ai'
 import PrompSuggestionsRow from './components/PrompSuggestionsRow'
 import LoadingBubble from './components/LoadingBubble'
 import Bubble from './components/Bubble'
+import { POST } from './api/chat/route'
 
 
 const Home = () =>{
     const { append, handleInputChange,isLoading, messages, handleSubmit, input } = useChat()
     
     const noMessages = !messages || messages.length === 0
+    console.log('Debugging the messages:', messages)
     
     const handlePrompt = ({prompText}: any) =>{
         const msg: Message = {
@@ -22,6 +24,7 @@ const Home = () =>{
             role: "user"
         }
         append(msg)
+        console.log('Debugging the messages in page as prompt:', prompText)
     }
     return (
         <main>

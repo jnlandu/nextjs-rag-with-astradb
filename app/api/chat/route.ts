@@ -1,7 +1,8 @@
-// import { groq } from '@ai-sdk/groq';
+import { groq } from '@ai-sdk/groq';
 import Groq  from 'groq-sdk';
 import { HuggingFaceInferenceEmbeddings } from '@langchain/community/embeddings/hf';
 import { DataAPIClient } from '@datastax/astra-db-ts';
+import { streamText } from 'ai';
 
 
 const { 
@@ -24,10 +25,7 @@ export async function POST(req: Request){
     try{
         const { messages } = await req.json()
         // const latestMessage = messages[messages?.length - 1]
-        console.log('Debugging the messages', messages)
-        console.log('------------------------------------')
         const latestMessage = messages[messages?.length - 1]?.content
-
         let docContext = ''
         // Create an embedding for the latest message:
       
@@ -35,7 +33,6 @@ export async function POST(req: Request){
             apiKey: HUGGINGFACE_API_KEY,
             model: "intfloat/multilingual-e5-large",
         })._embed([latestMessage]) // Embed the latest message
-    
         // Get the embeddings from the database:
         try {
             const collection = await db.collection(ASTRA_DB_COLLECTION_NAME!)
@@ -49,7 +46,6 @@ export async function POST(req: Request){
             const documents  = await cursor.toArray()
             const docsMap = documents?.map((doc: any) => {doc.text})
             docContext = JSON.stringify(docsMap)
-            
             } catch(e){
                 console.log('Error querrying the database:', e)
                 docContext = ''
@@ -73,24 +69,21 @@ export async function POST(req: Request){
             -----------------------
             `
         } 
+
        const chatCompletion = await groqClient.chat.completions.create({
         messages: [template, ...messages],
         model: 'mixtral-8x7b-32768',
         max_tokens: 1024,
         stream: true,
        }) 
-
-       console.log('Debugging the chatCompletion:',chatCompletion)
        const allContent = []
        for await (const chunk of chatCompletion){
-        allContent.push(chunk.choices[0].delta?.content || 'error, not streaming')
-        console.log('Debugging the chatCompletion chunk:',chunk.choices[0].delta?.content || 'error, not streaming')
+        allContent.push(chunk.choices[0].delta?.content)
+        console.log(chunk.choices[0].delta?.content || 'error, not streaming')
        };
        return new Response(JSON.stringify(allContent), {status: 200})
     } catch(e){
         throw e
-        // console.log('Error in the POST request:', e)
-        // return new Response(JSON.stringify({error: e}), {status: 500})
     }
 }
 
