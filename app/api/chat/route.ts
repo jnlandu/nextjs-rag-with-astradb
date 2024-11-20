@@ -1,9 +1,7 @@
 // import { groq } from '@ai-sdk/groq';
 import Groq  from 'groq-sdk';
-// import { createGroq } from '@ai-sdk/groq';
 import { HuggingFaceInferenceEmbeddings } from '@langchain/community/embeddings/hf';
 import { DataAPIClient } from '@datastax/astra-db-ts';
-
 
 
 const { 
@@ -28,31 +26,26 @@ export async function POST(req: Request){
         // const latestMessage = messages[messages?.length - 1]
         console.log('Debugging the messages', messages)
         console.log('------------------------------------')
-        const latestMessage = messages[messages?.length - 1].content
+        const latestMessage = messages[messages?.length - 1]?.content
 
         let docContext = ''
         // Create an embedding for the latest message:
-        console.log('Debugging the latest message:', latestMessage.role)
-        console.log('------------------------------------')
-        console.log('Debugging the latest message content:', latestMessage)
-        console.log('------------------------------------')
+      
         const embedding = await  new HuggingFaceInferenceEmbeddings({
             apiKey: HUGGINGFACE_API_KEY,
             model: "intfloat/multilingual-e5-large",
         })._embed([latestMessage]) // Embed the latest message
-        console.log('Debugging the embedding:', embedding)
-
+    
         // Get the embeddings from the database:
         try {
             const collection = await db.collection(ASTRA_DB_COLLECTION_NAME!)
             const cursor =  collection.find({}, {
                 sort: { 
                     $vector: embedding[0]
-            },
-            limit: 10
+                },
+                limit: 10
             })
 
-            console.log('Debugging the cursor:', cursor)
             const documents  = await cursor.toArray()
             const docsMap = documents?.map((doc: any) => {doc.text})
             docContext = JSON.stringify(docsMap)
@@ -74,7 +67,6 @@ export async function POST(req: Request){
             ----------------------
             START CONTEXT
             ${docContext}
-            
             END CONTEXT
             ---------------------- 
             QUESTION: ${latestMessage}
@@ -85,13 +77,21 @@ export async function POST(req: Request){
         messages: [template, ...messages],
         model: 'mixtral-8x7b-32768',
         max_tokens: 1024,
-        stream: true
+        stream: true,
        }) 
+
+       console.log('Debugging the chatCompletion:',chatCompletion)
+       const allContent = []
        for await (const chunk of chatCompletion){
-        return chunk.choices[0].delta?.content || 'error, not streaaming'
-       }
-    }  
-    
+        allContent.push(chunk.choices[0].delta?.content || 'error, not streaming')
+        console.log('Debugging the chatCompletion chunk:',chunk.choices[0].delta?.content || 'error, not streaming')
+       };
+       return new Response(JSON.stringify(allContent), {status: 200})
+    } catch(e){
+        throw e
+        // console.log('Error in the POST request:', e)
+        // return new Response(JSON.stringify({error: e}), {status: 500})
+    }
 }
 
 
