@@ -46,10 +46,6 @@ const Home = () =>{
                     <>
                     {messages.map((message) => (
                         <Bubble key={`message-${message.id}`} message={message} />
-                        // <div key={message.id} className={`${message.role} bubble`}>
-                        //     {message.role === 'user'  ? 'User' : 'F1GPT'}
-                        //     <p>{message.content}</p>
-                        // </div>
                     ))}
          
                      { isLoading && <LoadingBubble />}

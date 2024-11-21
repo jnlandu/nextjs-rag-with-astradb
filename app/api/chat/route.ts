@@ -6,6 +6,9 @@ import { streamText } from 'ai';
 import { StreamTextResult } from 'ai';
 
 
+// Allow streaming responses up to 30 seconds
+export const maxDuration = 30;
+
 const { 
     ASTRA_DB_NAMESPACE, 
     ASTRA_DB_COLLECTION_NAME, 
@@ -89,19 +92,23 @@ export async function POST(req: Request){
     //    const allContent = []
     //    for await (const chunk of chatCompletion){
     //     allContent.push(chunk.choices[0].delta?.content)
-    //     console.log(chunk.choices[0].delta?.content || 'error, not streaming')
+    //     console.log(chunk.choices[0].delta?.content || '')
     //    };
     //    const res =  new Response(JSON.stringify(allContent), {status: 200})
     //    console.log('Debugging the response:', res)
     //    return res
-       const result = streamText({
+
+    // )
+
+
+       const result =  streamText({
         model: groq('mixtral-8x7b-32768'),
         messages: [template, ...messages],
        })
     //    console.log('Debugging the result:', result)
        console.log('-----------------')
     //    console.log('Debugging the resultat:', result.toDataStreamResponse())
-       return result.toDataStreamResponse()
+       return result.toTextStreamResponse()
     } catch(e){
         throw e
     }
