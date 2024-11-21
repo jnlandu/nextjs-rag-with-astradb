@@ -44,8 +44,12 @@ const Home = () =>{
                     </>   
                 ):(
                     <>
-                    {messages.map((message: Message, index: number) => (
-                        <Bubble key={`message-${index}`} message={message} />
+                    {messages.map((message) => (
+                        // <Bubble key={`message-${message.id}`} message={message} />
+                        <div key={message.id} className={`${message.role} bubble`}>
+                            {message.role === 'user'  ? 'User' : 'F1GPT'}
+                            <p>{message.content}</p>
+                        </div>
                     ))}
          
                      { isLoading && <LoadingBubble />}
@@ -53,8 +57,12 @@ const Home = () =>{
                 )}
              </section>
               <form onSubmit={handleSubmit}>
-                    <input className='question-box' onChange={handleInputChange}
-                    value ={input} placeholder='Ask me anything about Formula One!' />
+                    <input 
+                        className='question-box' 
+                        value ={input} 
+                        onChange={handleInputChange}
+                        placeholder='Ask me anything about Formula One!' 
+                    />
                     <input type='submit' />
 
                 </form>

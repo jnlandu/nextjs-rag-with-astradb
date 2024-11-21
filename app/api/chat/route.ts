@@ -1,5 +1,5 @@
 import { groq } from '@ai-sdk/groq';
-import Groq  from 'groq-sdk';
+// import Groq  from 'groq-sdk';
 import { HuggingFaceInferenceEmbeddings } from '@langchain/community/embeddings/hf';
 import { DataAPIClient } from '@datastax/astra-db-ts';
 import { streamText } from 'ai';
@@ -16,7 +16,7 @@ const {
 
 
     //  const groqClient =  groq()
-const groqClient = new Groq({apiKey: GROQ_API_KEY})
+// const groqClient = new Groq({apiKey: GROQ_API_KEY})
 const client = new DataAPIClient(ASTRA_DB_APPLICATION_TOKEN);
 const db = client.db(ASTRA_DB_API_ENDPOINT!, {namespace: ASTRA_DB_NAMESPACE});
 
@@ -70,18 +70,26 @@ export async function POST(req: Request){
             `
         } 
 
-       const chatCompletion = await groqClient.chat.completions.create({
+    //    const chatCompletion = await groqClient.chat.completions.create({
+    //     messages: [template, ...messages],
+    //     model: 'mixtral-8x7b-32768',
+    //     max_tokens: 1024,
+    //     stream: true,
+    //    }) 
+    //    const allContent = []
+    //    for await (const chunk of chatCompletion){
+    //     allContent.push(chunk.choices[0].delta?.content)
+    //     console.log(chunk.choices[0].delta?.content || 'error, not streaming')
+    //    };
+    //    return new Response(JSON.stringify(allContent), {status: 200})
+       const result = streamText({
+        model: groq('mixtral-8x7b-32768'),
         messages: [template, ...messages],
-        model: 'mixtral-8x7b-32768',
-        max_tokens: 1024,
-        stream: true,
-       }) 
-       const allContent = []
-       for await (const chunk of chatCompletion){
-        allContent.push(chunk.choices[0].delta?.content)
-        console.log(chunk.choices[0].delta?.content || 'error, not streaming')
-       };
-       return new Response(JSON.stringify(allContent), {status: 200})
+       })
+       console.log('Debugging the result:', result)
+       console.log('-----------------')
+       console.log('Debugging the result:', result.toDataStreamResponse())
+       return result.toDataStreamResponse()
     } catch(e){
         throw e
     }
